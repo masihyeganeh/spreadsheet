@@ -1,0 +1,40 @@
+WHITESPACE = _{ " " | "\t" }
+file = { SOI ~ row+ }
+row = { (cell | delimiter)+ ~ end_of_line }
+cell = { label | equation | any_string }
+
+equation = { "=" ~ expression }
+expression = { (function_call | reference | paren | copy_evaluated | copy_above | label_reference | value) ~ (operator ~ expression)* }
+paren = { "(" ~ expression ~ ")" }
+function_call = { identifier ~ "(" ~ expression? ~ ("," ~ expression)* ~ ")" }
+reference = { cell_reference | column_reference }
+label = { "!" ~ identifier }
+label_reference = { "@" ~ identifier ~ "<" ~ integer ~ ">" }
+copy_evaluated = { column ~ "^" }
+copy_above = { "^^" }
+column_reference = { column ~ "^v" }
+column = { ASCII_ALPHA_UPPER+ }
+cell_reference = { column ~ integer }
+
+identifier_chars = { ASCII_ALPHANUMERIC | "_" }
+value = { float | integer | string }
+float = @{ NUMBER+ ~ "." ~ NUMBER* | NUMBER* ~ "." ~ NUMBER+ }
+integer = @{ NUMBER+ }
+char = {
+    !("\"" | "\\") ~ ANY
+    | "\\" ~ ("\"" | "\\" | "/" | "b" | "f" | "n" | "r" | "t")
+    | "\\" ~ ("u" ~ ASCII_HEX_DIGIT{4})
+}
+inner = @{ char* }
+string = { "\"" ~ inner ~ "\"" }
+any_string = { (!delimiters ~ ANY)+ }
+
+identifier = @{ !NUMBER ~ identifier_chars+ }
+delimiters = { WHITESPACE | delimiter | NEWLINE }
+plus = { "+" }
+minus = { "-" }
+multiply = { "*" }
+divide = { "/" }
+operator = { plus | minus | multiply | divide }
+delimiter = { "|" }
+end_of_line = { NEWLINE+ | EOI }
